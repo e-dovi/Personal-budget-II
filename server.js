@@ -44,9 +44,10 @@ app.get('/envelope/:id', (req, res)=>
 
 // Withdraw money from a certain envelope
 app.post('/withdraw/:id', (req, res)=>{
+    
     const env=req.params.id;
     const amt=req.body.amount;
-    let val=[];
+    
     pool.query('SELECT * FROM envelopes WHERE name=$1', [env], (error, results)=>{
         if(error){
             res.send('Something went wrong');
