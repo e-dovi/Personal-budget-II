@@ -44,7 +44,6 @@ app.get('/envelope/:id', (req, res)=>
 
 // Withdraw money from a certain envelope
 app.post('/withdraw/:id', (req, res)=>{
-    
     const env=req.params.id;
     const amt=req.body.amount;
     
@@ -63,7 +62,7 @@ app.post('/withdraw/:id', (req, res)=>{
                     throw error;
                 }
                 else{
-                    res.send('Done...')
+                    res.send('Success...')
                 }
             }) 
          }
@@ -72,6 +71,21 @@ app.post('/withdraw/:id', (req, res)=>{
         }
     })
 
+})
+
+//Add an envelope
+
+app.post('/envelope/add', (req, res)=>{
+    const env=req.body.name;
+    const max=req.body.max;
+    pool.query('INSERT INTO envelopes VALUES ($1, $2, 0)', [env, max], (error, result)=>{
+        if (error){
+            throw error;
+        }
+        else{
+            res.send('Added successfully...');
+        }
+    })
 })
 
 //Delete an envelope
@@ -104,15 +118,15 @@ app.put('/transfer/:from/:to', (req, res)=>{
             else{
                 pool.query('UPDATE envelopes SET expense=expense+$1 WHERE name=$2', [amt, f_env], (error, result)=>{
                     if(error){
-                        res.send('error with the sending envelope');
+                        res.send('error from the Sending envelope');
                     }
                     else{
                         pool.query('UPDATE envelopes SET maximum=maximum+$1 WHERE name=$2', [amt, to_env], (error, result)=>{
                             if (error){
-                                res.send('Error with the receiving envelope');
+                                res.send('Error from the Receiving envelope');
                             }
                             else{
-                                res.send('Transfer successfull...')
+                                res.send('Transfer Successful...')
                             }
                         })
                     }
