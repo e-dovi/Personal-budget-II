@@ -1,23 +1,27 @@
-const express=require('express');
-const app=express();
+const express = require('express');
+const app = express();
 
 app.use(express.json());
-const Pool=require('pg').Pool
-const pool=new Pool({
-  user: 'username',
+const Client=require('pg').Client
+const client = new Client({
+  user: 'database user',
   host: 'localhost',
   database: 'Budget',
   password: 'password',
-  port: 5432,
+  port: port,
 })
-
+const connect = async ()=>{
+    await client.connect()
+  }
+  
+  connect();
 
 const PORT=5000;
 
 
 //GET all  envelopes
 app.get('/envelopes', (req, res)=>{
-    pool.query('SELECT * FROM envelopes', (error, results)=>{
+    client.query('SELECT * FROM envelopes', (error, results)=>{
         if (error){
             throw error;
         }
@@ -31,7 +35,7 @@ app.get('/envelopes', (req, res)=>{
 app.get('/envelope/:id', (req, res)=>
     
 {   const val=req.params.id
-    pool.query('SELECT * FROM envelopes WHERE name= $1', [val], (error, results)=>{
+    client.query('SELECT * FROM envelopes WHERE name= $1', [val], (error, results)=>{
         if (error){
             throw error
         }
@@ -47,7 +51,7 @@ app.post('/withdraw/:id', (req, res)=>{
     const env=req.params.id;
     const amt=req.body.amount;
     
-    pool.query('SELECT * FROM envelopes WHERE name=$1', [env], (error, results)=>{
+    client.query('SELECT * FROM envelopes WHERE name=$1', [env], (error, results)=>{
         if(error){
             res.send('Something went wrong');
         }
@@ -57,7 +61,7 @@ app.post('/withdraw/:id', (req, res)=>{
         }
 
         if(valMax-valEx>=amt){
-            pool.query('UPDATE envelopes SET expense=expense+$1 WHERE name=$2', [amt, env], (error, results)=>{
+            client.query('UPDATE envelopes SET expense=expense+$1 WHERE name=$2', [amt, env], (error, results)=>{
                 if (error){
                     throw error;
                 }
@@ -78,7 +82,7 @@ app.post('/withdraw/:id', (req, res)=>{
 app.post('/envelope/add', (req, res)=>{
     const env=req.body.name;
     const max=req.body.max;
-    pool.query('INSERT INTO envelopes VALUES ($1, $2, 0)', [env, max], (error, result)=>{
+    client.query('INSERT INTO envelopes VALUES ($1, $2, 0)', [env, max], (error, result)=>{
         if (error){
             throw error;
         }
@@ -91,7 +95,7 @@ app.post('/envelope/add', (req, res)=>{
 //Delete an envelope
 app.delete('/envelope/delete/:id', (req, res)=>{
     const env=req.params.id;
-    pool.query('DELETE FROM envelopes WHERE name=$1', [env], (error, result)=>{
+    client.query('DELETE FROM envelopes WHERE name=$1', [env], (error, result)=>{
         if (error){
             throw error;
         }
@@ -106,7 +110,7 @@ app.put('/transfer/:from/:to', (req, res)=>{
     const amt=req.body.amount;
     const f_env=req.params.from;
     const to_env=req.params.to;
-    pool.query('SELECT * FROM envelopes WHERE name=$1', [f_env], (error, result)=>{
+    client.query('SELECT * FROM envelopes WHERE name=$1', [f_env], (error, result)=>{
         if (error){
             res.send('Sorry something went wrong...');
         }
@@ -116,17 +120,17 @@ app.put('/transfer/:from/:to', (req, res)=>{
                 res.send('Sorry insufficient fund...');
             }
             else{
-                pool.query('UPDATE envelopes SET expense=expense+$1 WHERE name=$2', [amt, f_env], (error, result)=>{
+                client.query('UPDATE envelopes SET expense=expense+$1 WHERE name=$2', [amt, f_env], (error, result)=>{
                     if(error){
-                        res.send('error from the Sending envelope');
+                        res.send('error with the sending envelope');
                     }
                     else{
-                        pool.query('UPDATE envelopes SET maximum=maximum+$1 WHERE name=$2', [amt, to_env], (error, result)=>{
+                        client.query('UPDATE envelopes SET maximum=maximum+$1 WHERE name=$2', [amt, to_env], (error, result)=>{
                             if (error){
-                                res.send('Error from the Receiving envelope');
+                                res.send('Error with the receiving envelope');
                             }
                             else{
-                                res.send('Transfer Successful...')
+                                res.send('Transfer successfull...')
                             }
                         })
                     }
